@@ -32,7 +32,7 @@ class MintArkForm(forms.Form):
 
 class UpdateArkForm(forms.Form):
     ark = forms.CharField(validators=[validate_ark])
-    url = forms.URLField(required=False, initial=None)
+    url = forms.URLField(required=False)
     metadata = forms.CharField(required=False)
     title = forms.CharField(required=False)
     type = forms.CharField(required=False)

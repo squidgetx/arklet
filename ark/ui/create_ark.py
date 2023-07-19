@@ -1,8 +1,9 @@
 import argparse
 import requests
+import os
 
 URL = 'http://127.0.0.1:8000/mint'
-DEFAULT_KEY = '6276ab86-01e6-46e2-97d9-bd9901816c0a'
+DEFAULT_KEY = os.environ['ARK_API_KEY']
 
 def send_mint_request(mint_url, **kwargs):
     auth = kwargs.pop('auth')
@@ -23,7 +24,7 @@ def send_mint_request(mint_url, **kwargs):
         print(response.text)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Send a PUT request to a configurable URL.")
+    parser = argparse.ArgumentParser(description="Mint a new ARK") 
     parser.add_argument("naan", help="Value for the 'naan' parameter")
     parser.add_argument("shoulder", help="Value for the 'shoulder' parameter")
     parser.add_argument("name", help="Value for the 'name' parameter")
