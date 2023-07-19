@@ -54,17 +54,17 @@ def mint_ark(request):
     except ValidationError as e:  # probably an invalid key
         return HttpResponseBadRequest(e)
 
-    naan = mint_request.cleaned_data["naan"]
-    shoulder = mint_request.cleaned_data["shoulder"]
-    url = mint_request.cleaned_data["url"]
-    metadata = mint_request.cleaned_data["metadata"]
-    rights = mint_request.cleaned_data["rights"]
+    # Pop these keys so that we can pass the cleaned data
+    # dict directly to the create method later
+    naan = mint_request.cleaned_data.pop("naan")
+    shoulder = mint_request.cleaned_data.pop("shoulder")
 
     if authorized_naan.naan != naan:
         return HttpResponseForbidden()
 
     ark, collisions = None, 0
     for _ in range(10):
+        # TODO this code should be moved to the ARK model 
         noid = generate_noid(8)
         base_ark_string = f"{naan}{shoulder}{noid}"
         check_digit = noid_check_digit(base_ark_string)
@@ -75,9 +75,7 @@ def mint_ark(request):
                 naan=authorized_naan,
                 shoulder=shoulder,
                 assigned_name=f"{noid}{check_digit}",
-                url=url,
-                metadata=metadata,
-                rights=rights,
+                **mint_request.cleaned_data
             )
             break
         except IntegrityError:
@@ -110,6 +108,7 @@ def update_ark(request):
     if not update_request.is_valid():
         return JsonResponse(update_request.errors, status=400)
 
+
     # TODO: get rid of UUID for key
     # TODO: hash the keys and only show on creation
     bearer_token = request.headers.get("Authorization")
@@ -127,9 +126,6 @@ def update_ark(request):
         return HttpResponseBadRequest(e)
 
     ark = update_request.cleaned_data["ark"]
-    url = update_request.cleaned_data["url"]
-    metadata = update_request.cleaned_data["metadata"]
-    rights = update_request.cleaned_data["rights"]
 
     _, naan, assigned_name = parse_ark(ark)
 
@@ -137,14 +133,17 @@ def update_ark(request):
         return HttpResponseForbidden()
 
     try:
-        ark = Ark.objects.get(ark=f"{naan}/{assigned_name}")
+        ark_obj = Ark.objects.get(ark=f"{naan}/{assigned_name}")
     except Ark.DoesNotExist:
         raise Http404
-
-    ark.url = url
-    ark.metadata = metadata
-    ark.rights = rights
-    ark.save()
+    
+    for key in update_request.cleaned_data:
+        if key is 'ark':
+            continue
+        print(key, update_request.cleaned_data[key])
+        setattr(ark_obj, key, update_request.cleaned_data[key])
+    print(ark_obj.__dict__)
+    ark_obj.save()
 
     return HttpResponse()
 
@@ -158,13 +157,13 @@ def resolve_ark(request, ark: str):
         return HttpResponseBadRequest(e)
     try:
         ark_obj = Ark.objects.get(ark=f"{naan}/{assigned_name}")
-        if not ark_obj.url:
-            # TODO: return a template page for an ARK in progress
-            raise Http404
         if 'info' in inflections:
             return view_ark(request, ark_obj)
         if 'json' in inflections:
             return json_ark(request, ark_obj)
+        if not ark_obj.url:
+            # TODO: return a template page for an ARK in progress
+            raise Http404
         return HttpResponseRedirect(ark_obj.url)
     except Ark.DoesNotExist:
         try:
