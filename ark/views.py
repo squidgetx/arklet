@@ -125,7 +125,9 @@ def update_ark(request):
     except ValidationError as e:
         return HttpResponseBadRequest(e)
 
-    ark = update_request.cleaned_data["ark"]
+    # The ark field is immutable, pop it out of the cleaned
+    # data dictionary here so we don't try to update it later
+    ark = update_request.cleaned_data.pop("ark")
 
     _, naan, assigned_name = parse_ark(ark)
 
@@ -138,11 +140,7 @@ def update_ark(request):
         raise Http404
     
     for key in update_request.cleaned_data:
-        if key is 'ark':
-            continue
-        print(key, update_request.cleaned_data[key])
         setattr(ark_obj, key, update_request.cleaned_data[key])
-    print(ark_obj.__dict__)
     ark_obj.save()
 
     return HttpResponse()
