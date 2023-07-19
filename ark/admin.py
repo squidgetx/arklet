@@ -1,7 +1,7 @@
 """Django Admin models for Arklet."""
 
-from django.contrib import admin
-
+from django.contrib import admin, messages
+from django.shortcuts import render
 from ark.models import Ark, Key, Naan, Shoulder, User
 
 
@@ -44,3 +44,11 @@ class KeyAdmin(admin.ModelAdmin):
     """
 
     list_display = ["key", "naan", "active"]
+    exclude=['key']
+
+    def save_model(self, request, obj, form, change):
+        obj, api_key = obj.generate_api_key()
+        super().save_model(request, obj, form, change)
+        
+        # Add a custom message after saving the model
+        messages.success(request, f"Your new API key is {api_key}. Write this down in a secure location!")

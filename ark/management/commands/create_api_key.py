@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         naan = kwargs['naan']
         # Generate an API key
-        key_obj, api_key = Key.generate_api_key(naan)
+        key_obj, api_key = Key.create_for_naan(naan)
 
         # Print the generated API key to the command line
         self.stdout.write(self.style.SUCCESS("Generated API Key: {}".format(api_key)))

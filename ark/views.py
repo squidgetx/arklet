@@ -111,7 +111,7 @@ def update_ark(request):
     if not update_request.is_valid():
         return JsonResponse(update_request.errors, status=400)
 
-        # The ark field is immutable, pop it out of the cleaned
+    # The ark field is immutable, pop it out of the cleaned
     # data dictionary here so we don't try to update it later
     ark = update_request.cleaned_data.pop("ark")
 

@@ -27,16 +27,20 @@ class User(AbstractUser):
 class Key(models.Model):
     key = models.CharField(max_length=4096, primary_key=True)
 
+    def generate_api_key(self):
+        api_key = uuid.uuid4()
+        self.set_password(str(api_key))
+        return self, api_key
+
     @classmethod
-    def generate_api_key(cls, naan_id):
+    def create_for_naan(cls, naan_id):
         try:
             naan_instance = Naan.objects.get(naan=naan_id)
         except Naan.DoesNotExist:
             raise ValueError("Naan instance with the provided ID does not exist.")
 
-        api_key = uuid.uuid4()
         key_inst = Key(active=True, naan=naan_instance)
-        key_inst.set_password(str(api_key))
+        key_inst, api_key = key_inst.generate_api_key()
         key_inst.save()
         return key_inst, api_key
 
@@ -49,10 +53,10 @@ class Key(models.Model):
         return check_password(raw_password, self.key)
 
     naan = models.ForeignKey(Naan, on_delete=models.CASCADE)
-    active = models.BooleanField()
+    active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"Key-{self.naan.naan}-{self.key.hex[:8]}..."
+        return f"Key-{self.naan.naan}-{self.key[:8]}..."
 
 
 class Shoulder(models.Model):
