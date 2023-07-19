@@ -16,13 +16,30 @@ from django.http import (
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
+from django.contrib.auth.hashers import make_password, check_password
 
 from ark.forms import MintArkForm, UpdateArkForm
-from ark.models import Ark, Naan
+from ark.models import Ark, Naan, Key
 from ark.utils import generate_noid, noid_check_digit, parse_ark
 
 logger = logging.getLogger(__name__)
 
+def authorize(request, naan):
+    bearer_token = request.headers.get("Authorization")
+    if not bearer_token:
+        return None
+
+    key = bearer_token.split()[-1]
+
+    try:
+        keys = Key.objects.filter(naan=naan,active=True)
+        for k in keys:
+            if k.check_password(key):
+                return k.naan
+        return None
+    except ValidationError as e:  # probably an invalid key
+        return None
+    
 
 @csrf_exempt
 def mint_ark(request):
@@ -39,28 +56,14 @@ def mint_ark(request):
     if not mint_request.is_valid():
         return JsonResponse(mint_request.errors, status=400)
 
-    # TODO: get rid of UUID for key
-    # TODO: hash the keys and only show on creation
-    bearer_token = request.headers.get("Authorization")
-    if not bearer_token:
-        return HttpResponseForbidden()
-
-    key = bearer_token.split()[-1]
-
-    try:
-        authorized_naan = Naan.objects.get(key__key=key)
-    except Naan.DoesNotExist:
-        return HttpResponseForbidden()
-    except ValidationError as e:  # probably an invalid key
-        return HttpResponseBadRequest(e)
-
     # Pop these keys so that we can pass the cleaned data
     # dict directly to the create method later
     naan = mint_request.cleaned_data.pop("naan")
-    shoulder = mint_request.cleaned_data.pop("shoulder")
-
-    if authorized_naan.naan != naan:
+    authorized_naan = authorize(request, naan)
+    if authorized_naan is None:
         return HttpResponseForbidden()
+
+    shoulder = mint_request.cleaned_data.pop("shoulder")
 
     ark, collisions = None, 0
     for _ in range(10):
@@ -108,30 +111,14 @@ def update_ark(request):
     if not update_request.is_valid():
         return JsonResponse(update_request.errors, status=400)
 
-
-    # TODO: get rid of UUID for key
-    # TODO: hash the keys and only show on creation
-    bearer_token = request.headers.get("Authorization")
-    if not bearer_token:
-        return HttpResponseForbidden()
-
-    key = bearer_token.split()[-1]
-
-    try:
-        # TODO: is key valid enough to pass here?
-        authorized_naan = Naan.objects.get(key__key=key)
-    except Naan.DoesNotExist:
-        return HttpResponseForbidden()
-    except ValidationError as e:
-        return HttpResponseBadRequest(e)
-
-    # The ark field is immutable, pop it out of the cleaned
+        # The ark field is immutable, pop it out of the cleaned
     # data dictionary here so we don't try to update it later
     ark = update_request.cleaned_data.pop("ark")
 
     _, naan, assigned_name = parse_ark(ark)
 
-    if authorized_naan.naan != naan:
+    authorized_naan = authorize(request, naan)
+    if authorized_naan is None:
         return HttpResponseForbidden()
 
     try:

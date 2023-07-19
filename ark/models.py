@@ -1,9 +1,11 @@
 import uuid
+import os
+import hashlib
 
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.db import models
-
 
 class Naan(models.Model):
     naan = models.PositiveBigIntegerField(primary_key=True)
@@ -23,7 +25,29 @@ class User(AbstractUser):
 
 
 class Key(models.Model):
-    key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    key = models.CharField(max_length=4096, primary_key=True)
+
+    @classmethod
+    def generate_api_key(cls, naan_id):
+        try:
+            naan_instance = Naan.objects.get(naan=naan_id)
+        except Naan.DoesNotExist:
+            raise ValueError("Naan instance with the provided ID does not exist.")
+
+        api_key = uuid.uuid4()
+        key_inst = Key(active=True, naan=naan_instance)
+        key_inst.set_password(str(api_key))
+        key_inst.save()
+        return key_inst, api_key
+
+    def set_password(self, raw_password):
+        # Hash the raw password before storing it in the database
+        self.key = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        # Check if the provided raw password matches the hashed password in the database
+        return check_password(raw_password, self.key)
+
     naan = models.ForeignKey(Naan, on_delete=models.CASCADE)
     active = models.BooleanField()
 
