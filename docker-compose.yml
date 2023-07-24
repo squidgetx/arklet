@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   postgres:
-    container_name: arkled_db
+    container_name: arklet_db
     image: postgres:14-alpine
     env_file:
       - ./docker/env.docker.local
@@ -12,13 +12,13 @@ services:
     ports:
       - "5432:5432"
 
-  arklet:
-    container_name: arklet_django
+  arklet-minter:
+    container_name: arklet_minter
     restart: always
     build:
-        context: .
-        target: dev
-        dockerfile: ./Dockerfile
+      context: .
+      target: dev
+      dockerfile: ./Dockerfile
     command: /app/entrypoint.sh
     volumes:
       - ./ark:/app/ark
@@ -26,6 +26,27 @@ services:
       - ./arklet:/app/arklet
     env_file:
       - ./docker/env.docker.local
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  arklet-resolver:
+    container_name: arklet_resolver
+    restart: always
+    build:
+      context: .
+      target: dev
+      dockerfile: ./Dockerfile
+    command: /app/entrypoint.sh
+    volumes:
+      - ./ark:/app/ark
+      - ./ark_import:/app/ark_import
+      - ./arklet:/app/arklet
+    env_file:
+      - ./docker/env.docker.local
+    environment:
+      RESOLVER: true
     ports:
       - "8000:8000"
     depends_on:
