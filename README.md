@@ -1,7 +1,7 @@
 # Arklet-Frick: A basic ARK resolver
 
 Arklet-Frick is a fork of the [arklet](https://github.com/internetarchive/arklet/) project
-with a few additional features and configuration changes in order to support the Frick Art Reference Museum.
+with additional features, improved security and several bugfixes. This work was largely developed in support of the Frick Art Reference Library's use case.
 
 Arklet-Frick is a Python Django application for minting, binding, and resolving ARKs.
 It is intended to follow best practices set out by https://arks.org/.
@@ -57,7 +57,9 @@ relation (optional)
 source (optional)
 ```
 
-Returns an empty 200 response if update is successful
+Returns an empty 200 response if update is successful.
+
+Python command line tools are available in the `/ui` subdirectory for interacting with the API.
 
 # Deployment
 
