@@ -10,7 +10,7 @@ This code is licensed with the MIT open source license.
 
 # Usage / API
 
-The django application can be run either in minter mode, or in resolver mode.
+The django application can be run either in minter mode, or in resolver mode. Resolver mode is limited to read requests, while the minter can be used for editing and updating ARKs.
 
 ## ARK resolution (minter or resolver modes)
 
@@ -59,7 +59,9 @@ source (optional)
 
 Returns an empty 200 response if update is successful
 
-## Local Deployment With Docker
+# Deployment
+
+## Local deployment
 
 Use `docker-compose up` to automatically launch the `postgres` database, the `arklet-minter` component, and the `arklet-resolver` component. By default, the minter runs on 127.0.0.1:8000 and the resolver runs on 127.0.0.1:8001.
 
