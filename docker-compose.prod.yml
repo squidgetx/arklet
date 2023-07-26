@@ -1,23 +1,12 @@
 version: "3.7"
 
 services:
-  postgres:
-    container_name: arklet_db
-    image: postgres:14-alpine
-    env_file:
-      - ./docker/env.postgres.local
-    volumes:
-      - postgres:/var/lib/postgresql/data
-    restart: always
-    ports:
-      - "5432:5432"
-
   arklet-minter:
     container_name: arklet_minter
     restart: always
     build:
       context: .
-      target: dev
+      target: prod
       dockerfile: ./Dockerfile
     command: /app/entrypoint.sh
     volumes:
@@ -25,8 +14,8 @@ services:
       - ./ark_import:/app/ark_import
       - ./arklet:/app/arklet
     env_file:
-      - ./docker/env.postgres.local
-      - ./docker/env.minter.local
+      - ./docker/env.postgres.prod
+      - ./docker/env.minter.prod
     ports:
       - "8000:8000"
 
@@ -35,7 +24,7 @@ services:
     restart: always
     build:
       context: .
-      target: dev
+      target: prod
       dockerfile: ./Dockerfile
     command: /app/entrypoint.sh
     volumes:
@@ -43,10 +32,7 @@ services:
       - ./ark_import:/app/ark_import
       - ./arklet:/app/arklet
     env_file:
-      - ./docker/env.postgres.local
-      - ./docker/env.resolver.local
+      - ./docker/env.postgres.prod
+      - ./docker/env.resolver.prod
     ports:
       - "8001:8001"
-
-volumes:
-  postgres:

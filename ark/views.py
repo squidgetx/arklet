@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.http import (
     Http404,
+    HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
@@ -14,13 +15,31 @@ from django.http import (
     JsonResponse,
 )
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render
+from django.contrib.auth.hashers import make_password, check_password
 
 from ark.forms import MintArkForm, UpdateArkForm
-from ark.models import Ark, Naan
+from ark.models import Ark, Naan, Key
 from ark.utils import generate_noid, noid_check_digit, parse_ark
 
 logger = logging.getLogger(__name__)
 
+def authorize(request, naan):
+    bearer_token = request.headers.get("Authorization")
+    if not bearer_token:
+        return None
+
+    key = bearer_token.split()[-1]
+
+    try:
+        keys = Key.objects.filter(naan=naan,active=True)
+        for k in keys:
+            if k.check_password(key):
+                return k.naan
+        return None
+    except ValidationError as e:  # probably an invalid key
+        return None
+    
 
 @csrf_exempt
 def mint_ark(request):
@@ -37,32 +56,18 @@ def mint_ark(request):
     if not mint_request.is_valid():
         return JsonResponse(mint_request.errors, status=400)
 
-    # TODO: get rid of UUID for key
-    # TODO: hash the keys and only show on creation
-    bearer_token = request.headers.get("Authorization")
-    if not bearer_token:
+    # Pop these keys so that we can pass the cleaned data
+    # dict directly to the create method later
+    naan = mint_request.cleaned_data.pop("naan")
+    authorized_naan = authorize(request, naan)
+    if authorized_naan is None:
         return HttpResponseForbidden()
 
-    key = bearer_token.split()[-1]
-
-    try:
-        authorized_naan = Naan.objects.get(key__key=key)
-    except Naan.DoesNotExist:
-        return HttpResponseForbidden()
-    except ValidationError as e:  # probably an invalid key
-        return HttpResponseBadRequest(e)
-
-    naan = mint_request.cleaned_data["naan"]
-    shoulder = mint_request.cleaned_data["shoulder"]
-    url = mint_request.cleaned_data["url"]
-    metadata = mint_request.cleaned_data["metadata"]
-    commitment = mint_request.cleaned_data["commitment"]
-
-    if authorized_naan.naan != naan:
-        return HttpResponseForbidden()
+    shoulder = mint_request.cleaned_data.pop("shoulder")
 
     ark, collisions = None, 0
     for _ in range(10):
+        # TODO this code should be moved to the ARK model 
         noid = generate_noid(8)
         base_ark_string = f"{naan}{shoulder}{noid}"
         check_digit = noid_check_digit(base_ark_string)
@@ -73,9 +78,7 @@ def mint_ark(request):
                 naan=authorized_naan,
                 shoulder=shoulder,
                 assigned_name=f"{noid}{check_digit}",
-                url=url,
-                metadata=metadata,
-                commitment=commitment,
+                **mint_request.cleaned_data
             )
             break
         except IntegrityError:
@@ -108,58 +111,48 @@ def update_ark(request):
     if not update_request.is_valid():
         return JsonResponse(update_request.errors, status=400)
 
-    # TODO: get rid of UUID for key
-    # TODO: hash the keys and only show on creation
-    bearer_token = request.headers.get("Authorization")
-    if not bearer_token:
-        return HttpResponseForbidden()
-
-    key = bearer_token.split()[-1]
-
-    try:
-        # TODO: is key valid enough to pass here?
-        authorized_naan = Naan.objects.get(key__key=key)
-    except Naan.DoesNotExist:
-        return HttpResponseForbidden()
-    except ValidationError as e:
-        return HttpResponseBadRequest(e)
-
-    ark = update_request.cleaned_data["ark"]
-    url = update_request.cleaned_data["url"]
-    metadata = update_request.cleaned_data["metadata"]
-    commitment = update_request.cleaned_data["commitment"]
+    # The ark field is immutable, pop it out of the cleaned
+    # data dictionary here so we don't try to update it later
+    ark = update_request.cleaned_data.pop("ark")
 
     _, naan, assigned_name = parse_ark(ark)
 
-    if authorized_naan.naan != naan:
+    authorized_naan = authorize(request, naan)
+    if authorized_naan is None:
         return HttpResponseForbidden()
 
     try:
-        ark = Ark.objects.get(ark=f"{naan}/{assigned_name}")
+        ark_obj = Ark.objects.get(ark=f"{naan}/{assigned_name}")
     except Ark.DoesNotExist:
         raise Http404
-
-    ark.url = url
-    ark.metadata = metadata
-    ark.commitment = commitment
-    ark.save()
+    
+    for key in update_request.cleaned_data:
+        setattr(ark_obj, key, update_request.cleaned_data[key])
+    ark_obj.save()
 
     return HttpResponse()
 
 
 def resolve_ark(request, ark: str):
     # TODO: maybe just parse the ark in the urls.py re_path
+    inflections = request.GET
     try:
         _, naan, assigned_name = parse_ark(ark)
     except ValueError as e:
         return HttpResponseBadRequest(e)
     try:
         ark_obj = Ark.objects.get(ark=f"{naan}/{assigned_name}")
+        if 'info' in inflections:
+            return view_ark(request, ark_obj)
+        if 'json' in inflections:
+            return json_ark(request, ark_obj)
         if not ark_obj.url:
             # TODO: return a template page for an ARK in progress
             raise Http404
         return HttpResponseRedirect(ark_obj.url)
     except Ark.DoesNotExist:
+        if inflections:
+            raise Http404
         try:
             naan_obj = Naan.objects.get(naan=naan)
             return HttpResponseRedirect(
@@ -169,3 +162,49 @@ def resolve_ark(request, ark: str):
             resolver = "https://n2t.net"
             # TODO: more robust resolver URL creation
             return HttpResponseRedirect(f"{resolver}/ark:/{naan}/{assigned_name}")
+
+
+"""
+Return HTML human readable webpage information about the Ark object
+"""
+def view_ark(request: HttpRequest, ark: Ark):
+
+    context = {
+        'ark': ark.ark,
+        'url': ark.url,
+        'label': ark.title,
+        'type': ark.type,
+        'commitment': ark.commitment,
+        'identifier': ark.identifier,
+        'format': ark.format,
+        'relation': ark.relation,
+        'source': ark.source,
+        'metadata': ark.metadata
+    }
+
+    return render(request, 'info.html', context)
+
+"""
+Return the Ark object as JSON
+"""
+def json_ark(request: HttpRequest, ark: Ark):
+    data = {
+        'ark': ark.ark,
+        'url': ark.url,
+        'title': ark.title,
+        'type': ark.type,
+        'commitment': ark.commitment,
+        'identifier': ark.identifier,
+        'format': ark.format,
+        'relation': ark.relation,
+        'source': ark.source,
+        'metadata': ark.metadata
+    }
+    obj = {}
+    for key in data:
+        obj[key] = Ark.COLUMN_METADATA.get(key, {})
+        obj[key]['value'] = data[key]
+
+
+    # Return the JSON response
+    return JsonResponse(obj)

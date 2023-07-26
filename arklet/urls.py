@@ -13,14 +13,23 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.contrib import admin
 from django.urls import path, re_path
 
 from ark import views
 
-urlpatterns = [
+minterpatterns = [
     path("mint", views.mint_ark, name="mint_ark"),
     path("update", views.update_ark, name="update_ark"),
-    re_path(r"^(resolve/)?(?P<ark>ark:/?.*$)", views.resolve_ark, name="resolve_ark"),
     path("admin/", admin.site.urls),
 ]
+
+resolverpatterns = [
+    re_path(r"^(resolve/)?(?P<ark>ark:/?.*$)", views.resolve_ark, name="resolve_ark"),
+]
+
+combinedpatterns = minterpatterns + resolverpatterns
+
+urlpatterns = resolverpatterns if os.environ.get("RESOLVER") else combinedpatterns
+

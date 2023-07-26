@@ -30,6 +30,7 @@ env = environ.Env(
     ARKLET_SENTRY_TRANSACTIONS_PER_TRACE=(int, 1),
     ARKLET_STATIC_ROOT=(str, "static"),
     ARKLET_MEDIA_ROOT=(str, "media"),
+    RESOLVER=(bool, False)
 )
 
 # .env files are optional. django-environ will log an INFO message if no file is found
@@ -136,6 +137,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
