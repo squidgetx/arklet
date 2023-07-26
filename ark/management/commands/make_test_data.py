@@ -3,9 +3,10 @@
 """
 
 from django.core.management.base import BaseCommand
-
+from django.db import transaction
 from ark.models import Ark, Naan
 from ark.utils import generate_noid
+import os
 
 
 class Command(BaseCommand):
@@ -15,32 +16,35 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("naan", type=int)
-        parser.add_argument("shoulder", type=str)
+        parser.add_argument("ark_count", type=int)
 
     def handle(self, *args, **options):
         naan_id = options["naan"]
+        n_arks = options['ark_count']
         naan = Naan.objects.get(pk=options["naan"])
         if not naan:
             print('minting naan')
             naan = Naan(naan=options['naan'])
             naan.save()
 
-        shoulder = options["shoulder"]
+        shoulder = "/b0"
+        batch_size = 10000
 
-        arkstr = f"{naan_id}{shoulder}teststr"
-        print(f"minting {arkstr}")
-        a = Ark(
-                ark=arkstr,
-                naan=naan,
-                shoulder=shoulder,
-                title = "Bibliographie zur kunstgeschichtlichen Literatur in ost- und südosteuropäischen Zeitschriften.",
-                type = 'Book',
-                rights = 'rights statement',
-                identifier = ' LC : 76643184 OCLC : (OCoLC)191719045',
-                format = 'Hardcover',
-                relation = 'https://ark.frick.org/ark:37624/an1abc123',
-                source = 'https://yamz.net/term/ark/h3886',
-                url="https://library.frick.org/permalink/01NYA_INST/1qqhid8/alma991000000019707141",
-                metadata="Issues for 1990- have title: Bibliographie zur kunstgeschichtlichen Literatur- in ost-, mittelost- und südosteuropäischen Zeitschriften."
-            )
-        a.save()
+        for i in range(0, n_arks, batch_size):
+            objs = []
+            for _ in range(batch_size):
+                name = str(os.urandom(8).hex())
+                arkstr = f"{naan_id}{shoulder}{name}"
+                a = Ark(
+                    ark=arkstr,
+                    naan=naan,
+                    shoulder=shoulder,
+                    url=f"https://google.com?q={name}",
+                    metadata=""
+                )
+                objs.append(a)
+
+            with transaction.atomic():
+                Ark.objects.bulk_create(objs)
+
+            print(f"Created {i} arks")

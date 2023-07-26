@@ -10,11 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='ark',
-            old_name='commitment',
-            new_name='rights',
-        ),
         migrations.AddField(
             model_name='ark',
             name='format',

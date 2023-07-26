@@ -48,11 +48,11 @@ class Ark(models.Model):
     assigned_name = models.CharField(max_length=100, editable=False)
     url = models.URLField(default="", blank=True)
     metadata = models.TextField(default="", blank=True)
+    commitment = models.TextField(default="", blank=True)
 
     # Frick specific fields here:
     title = models.TextField(default="", blank=True)
     type = models.TextField(default="", blank=True)
-    rights = models.TextField(default="", blank=True)
     identifier = models.TextField(default="", blank=True)
     format = models.TextField(default="", blank=True)
     relation = models.TextField(default="", blank=True)
@@ -67,8 +67,7 @@ class Ark(models.Model):
             'property': 'http://purl.org/dc/elements/1.1/type',
             'type': "xsd:string",
         },
-        'rights': {
-            'property': 'http://purl.org/dc/elements/1.1/rights',
+        'commitment': {
             'type': "xsd:string",
         },
         'identifier': {

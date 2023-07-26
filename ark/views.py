@@ -164,6 +164,8 @@ def resolve_ark(request, ark: str):
             raise Http404
         return HttpResponseRedirect(ark_obj.url)
     except Ark.DoesNotExist:
+        if inflections:
+            raise Http404
         try:
             naan_obj = Naan.objects.get(naan=naan)
             return HttpResponseRedirect(

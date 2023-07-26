@@ -23,10 +23,10 @@ class MintArkForm(forms.Form):
     metadata = forms.CharField(required=False)
     title = forms.CharField(required=False)
     type = forms.CharField(required=False)
-    rights = forms.CharField(required=False)
+    commitment = forms.CharField(required=False)
     identifier = forms.CharField(required=False)
     format = forms.CharField(required=False)
-    relation = forms.URLField(required=False)
+    relation = forms.CharField(required=False)
     source = forms.URLField(required=False)
 
 
@@ -36,10 +36,10 @@ class UpdateArkForm(forms.Form):
     metadata = forms.CharField(required=False)
     title = forms.CharField(required=False)
     type = forms.CharField(required=False)
-    rights = forms.CharField(required=False)
+    commitment = forms.CharField(required=False)
     identifier = forms.CharField(required=False)
     format = forms.CharField(required=False)
-    relation = forms.URLField(required=False)
+    relation = forms.CharField(required=False)
     source = forms.URLField(required=False)
 
     def clean(self):
