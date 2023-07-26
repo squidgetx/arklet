@@ -21,3 +21,5 @@ tomli==1.2.2
 typing-extensions==3.10.0.2
 urllib3==1.26.7
 django-environ==0.8.0
+argon2-cffi==21.3.0
+argon2-cffi-bindings==21.2.0
