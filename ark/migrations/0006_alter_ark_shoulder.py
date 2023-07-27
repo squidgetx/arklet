@@ -16,15 +16,4 @@ class Migration(migrations.Migration):
             name='shoulder',
             field=models.ForeignKey(editable=False, on_delete=django.db.models.deletion.DO_NOTHING, to='ark.shoulder'),
         ),
-        migrations.AlterField(
-            model_name='key',
-            name='active',
-            field=models.BooleanField(default=True),
-        ),
-        migrations.AlterField(
-            model_name='shoulder',
-            name='shoulder',
-            field=models.CharField(editable=False, max_length=50, unique=True),
-        ),
-
     ]
