@@ -15,4 +15,9 @@ class Migration(migrations.Migration):
             name='key',
             field=models.CharField(max_length=4096, primary_key=True, serialize=False),
         ),
+        migrations.AlterField(
+            model_name='key',
+            name='active',
+            field=models.BooleanField(default=True),
+        ),
     ]
