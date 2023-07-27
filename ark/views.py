@@ -20,7 +20,7 @@ from django.shortcuts import render
 from django.contrib.auth.hashers import make_password, check_password
 
 from ark.forms import MintArkForm, UpdateArkForm
-from ark.models import Ark, Naan, Key
+from ark.models import Ark, Naan, Key, Shoulder
 from ark.utils import generate_noid, noid_check_digit, parse_ark, gen_prefixes
 
 logger = logging.getLogger(__name__)
@@ -65,6 +65,9 @@ def mint_ark(request):
         return HttpResponseForbidden()
 
     shoulder = mint_request.cleaned_data.pop("shoulder")
+    shoulder_obj = Shoulder.objects.filter(shoulder=shoulder).first()
+    if shoulder_obj is None:
+        return HttpResponseBadRequest(f"Shoulder {shoulder} does not exist")
 
     ark, collisions = None, 0
     for _ in range(10):
@@ -77,7 +80,7 @@ def mint_ark(request):
             ark = Ark.objects.create(
                 ark=ark_string,
                 naan=authorized_naan,
-                shoulder=shoulder,
+                shoulder=shoulder_obj,
                 assigned_name=f"{noid}{check_digit}",
                 **mint_request.cleaned_data
             )

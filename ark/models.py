@@ -60,8 +60,9 @@ class Key(models.Model):
 
 
 class Shoulder(models.Model):
-    shoulder = models.CharField(max_length=50)
+    shoulder = models.CharField(max_length=50, editable=False, unique=True)
     naan = models.ForeignKey(Naan, on_delete=models.DO_NOTHING)
+
     name = models.CharField(max_length=200)
     description = models.TextField()
 
@@ -72,7 +73,7 @@ class Shoulder(models.Model):
 class Ark(models.Model):
     ark = models.CharField(primary_key=True, max_length=200, editable=False)
     naan = models.ForeignKey(Naan, on_delete=models.DO_NOTHING, editable=False)
-    shoulder = models.CharField(max_length=50, editable=False)
+    shoulder = models.ForeignKey(Shoulder, on_delete=models.DO_NOTHING, editable=False)
     assigned_name = models.CharField(max_length=100, editable=False)
     url = models.URLField(default="", blank=True)
     metadata = models.TextField(default="", blank=True)
