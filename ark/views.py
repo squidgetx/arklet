@@ -3,6 +3,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models.functions import Length
 from django.http import (
     Http404,
     HttpRequest,
@@ -20,7 +21,7 @@ from django.contrib.auth.hashers import make_password, check_password
 
 from ark.forms import MintArkForm, UpdateArkForm
 from ark.models import Ark, Naan, Key
-from ark.utils import generate_noid, noid_check_digit, parse_ark
+from ark.utils import generate_noid, noid_check_digit, parse_ark, gen_prefixes
 
 logger = logging.getLogger(__name__)
 
@@ -134,34 +135,44 @@ def update_ark(request):
 
 
 def resolve_ark(request, ark: str):
-    # TODO: maybe just parse the ark in the urls.py re_path
-    inflections = request.GET
+    info_inflection = 'info' in request.GET
+    json_inflection = 'json' in request.GET
+
     try:
-        _, naan, assigned_name = parse_ark(ark)
+        _, naan, identifier = parse_ark(ark)
     except ValueError as e:
         return HttpResponseBadRequest(e)
-    try:
-        ark_obj = Ark.objects.get(ark=f"{naan}/{assigned_name}")
-        if 'info' in inflections:
+
+    ark_str = f"{naan}/{identifier}"
+    ark_obj = Ark.objects.filter(ark=ark_str).first()
+    if ark_obj:
+        if info_inflection:
             return view_ark(request, ark_obj)
-        if 'json' in inflections:
+        if json_inflection:
             return json_ark(request, ark_obj)
         if not ark_obj.url:
-            # TODO: return a template page for an ARK in progress
-            raise Http404
-        return HttpResponseRedirect(ark_obj.url)
-    except Ark.DoesNotExist:
-        if inflections:
-            raise Http404
-        try:
-            naan_obj = Naan.objects.get(naan=naan)
-            return HttpResponseRedirect(
-                f"{naan_obj.url}/ark:/{naan_obj.naan}/{assigned_name}"
-            )
-        except Naan.DoesNotExist:
-            resolver = "https://n2t.net"
-            # TODO: more robust resolver URL creation
-            return HttpResponseRedirect(f"{resolver}/ark:/{naan}/{assigned_name}")
+            return view_ark(request, ark_obj)
+        return HttpResponseRedirect(ark_obj.url + '?' + request.META['QUERY_STRING'])
+    else:
+        # Ark not found. Try to find an ark that is a prefix.
+        prefixes = [f"{naan}/{a}" for a in gen_prefixes(identifier)]
+        # Get the one with the longest prefix
+        ark_prefix = Ark.objects.filter(ark__in=prefixes).order_by(Length('ark')).first()
+        if ark_prefix:
+            suffix = ark_str.removeprefix(ark_prefix.ark)
+            return HttpResponseRedirect(ark_prefix.url + suffix)
+        else:
+            if info_inflection or json_inflection:
+                raise Http404
+            try:
+                naan_obj = Naan.objects.get(naan=naan)
+                return HttpResponseRedirect(
+                    f"{naan_obj.url}/ark:/{ark_str}"
+                )
+            except Naan.DoesNotExist:
+                resolver = "https://n2t.net"
+                # TODO: more robust resolver URL creation
+                return HttpResponseRedirect(f"{resolver}/ark:/{ark_str}")
 
 
 """
