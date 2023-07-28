@@ -51,3 +51,4 @@ class UpdateArkForm(forms.Form):
                 cleaned_data.pop(field_name, None)
 
         return cleaned_data
+

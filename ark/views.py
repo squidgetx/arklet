@@ -21,7 +21,7 @@ from django.contrib.auth.hashers import make_password, check_password
 
 from ark.forms import MintArkForm, UpdateArkForm
 from ark.models import Ark, Naan, Key, Shoulder
-from ark.utils import generate_noid, noid_check_digit, parse_ark, gen_prefixes
+from ark.utils import generate_noid, noid_check_digit, parse_ark, gen_prefixes, parse_ark_lookup
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ def view_ark(request: HttpRequest, ark: Ark):
 """
 Return the Ark object as JSON
 """
-def json_ark(request: HttpRequest, ark: Ark):
+def ark_to_json(ark: Ark):
     data = {
         'ark': ark.ark,
         'url': ark.url,
@@ -218,7 +218,22 @@ def json_ark(request: HttpRequest, ark: Ark):
     for key in data:
         obj[key] = Ark.COLUMN_METADATA.get(key, {})
         obj[key]['value'] = data[key]
+    return obj
 
-
+def json_ark(request: HttpRequest, ark: Ark):
+    obj = ark_to_json(ark)
     # Return the JSON response
     return JsonResponse(obj)
+
+@csrf_exempt
+def batch_query_arks(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, TypeError) as e:
+        return HttpResponseBadRequest(e)
+    if len(data) > 100:
+        return HttpResponseBadRequest("Exceeded max rows (100)")
+    arks = [parse_ark_lookup(d.get('ark')) for d in data]
+    ark_objs = Ark.objects.filter(ark__in=arks)
+    resp = [ark_to_json(ark) for ark in ark_objs]
+    return JsonResponse(resp, safe=False)
