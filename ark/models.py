@@ -7,6 +7,9 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from ark.forms import UpdateArkForm
+from ark.utils import generate_noid, noid_check_digit
+
 class Naan(models.Model):
     naan = models.PositiveBigIntegerField(primary_key=True)
     name = models.CharField(max_length=200)
@@ -125,6 +128,29 @@ class Ark(models.Model):
         expected_ark = f"{self.naan.naan}{self.shoulder}{self.assigned_name}"
         if self.ark != expected_ark:
             raise ValidationError(f"expected {expected_ark} got {self.ark}")
+    
+    @classmethod
+    def create(cls, naan: Naan, shoulder: Shoulder):
+        noid = generate_noid(8)
+        ark_prefix = f"{naan.naan}{shoulder.shoulder}"
+        base_ark_string = f"{ark_prefix}{noid}"
+        check_digit = noid_check_digit(base_ark_string)
+        assigned_name = f"{noid}{check_digit}"
+        ark_string = f"{ark_prefix}{assigned_name}"
+
+        return Ark(
+            ark=ark_string,
+            naan=naan,
+            shoulder=shoulder,
+            assigned_name=assigned_name
+        )
+    
+    def set_fields(self, data: dict):
+        permitted_fields = set(UpdateArkForm.base_fields)
+        permitted_fields.remove('ark')
+        for key, val in data.items():
+            if key in permitted_fields:
+                setattr(self, key, val)
 
     def __str__(self):
         return f"ark:/{self.ark}"

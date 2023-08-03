@@ -17,11 +17,12 @@ from django.http import (
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
-from django.contrib.auth.hashers import make_password, check_password
 
 from ark.forms import MintArkForm, UpdateArkForm
 from ark.models import Ark, Naan, Key, Shoulder
-from ark.utils import generate_noid, noid_check_digit, parse_ark, gen_prefixes
+from ark.utils import parse_ark, gen_prefixes, parse_ark_lookup
+
+COLLISIONS = 10
 
 logger = logging.getLogger(__name__)
 
@@ -71,19 +72,10 @@ def mint_ark(request):
 
     ark, collisions = None, 0
     for _ in range(10):
-        # TODO this code should be moved to the ARK model 
-        noid = generate_noid(8)
-        base_ark_string = f"{naan}{shoulder}{noid}"
-        check_digit = noid_check_digit(base_ark_string)
-        ark_string = f"{base_ark_string}{check_digit}"
         try:
-            ark = Ark.objects.create(
-                ark=ark_string,
-                naan=authorized_naan,
-                shoulder=shoulder_obj,
-                assigned_name=f"{noid}{check_digit}",
-                **mint_request.cleaned_data
-            )
+            ark = Ark.create(authorized_naan, shoulder_obj)
+            ark.set_fields(mint_request.cleaned_data)
+            ark.save()
             break
         except IntegrityError:
             collisions += 1
@@ -130,11 +122,10 @@ def update_ark(request):
     except Ark.DoesNotExist:
         raise Http404
     
-    for key in update_request.cleaned_data:
-        setattr(ark_obj, key, update_request.cleaned_data[key])
+    ark_obj.set_fields(update_request.cleaned_data)
     ark_obj.save()
 
-    return HttpResponse()
+    return JsonResponse(ark_to_json(ark_obj, metadata=False))
 
 
 def resolve_ark(request, ark: str):
@@ -201,7 +192,7 @@ def view_ark(request: HttpRequest, ark: Ark):
 """
 Return the Ark object as JSON
 """
-def json_ark(request: HttpRequest, ark: Ark):
+def ark_to_json(ark: Ark, metadata=True):
     data = {
         'ark': ark.ark,
         'url': ark.url,
@@ -214,11 +205,121 @@ def json_ark(request: HttpRequest, ark: Ark):
         'source': ark.source,
         'metadata': ark.metadata
     }
+    if not metadata:
+        return data
     obj = {}
     for key in data:
         obj[key] = Ark.COLUMN_METADATA.get(key, {})
         obj[key]['value'] = data[key]
+    return obj
 
-
+def json_ark(request: HttpRequest, ark: Ark):
+    obj = ark_to_json(ark)
     # Return the JSON response
     return JsonResponse(obj)
+
+@csrf_exempt
+def batch_query_arks(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, TypeError) as e:
+        return HttpResponseBadRequest(e)
+    if len(data) > 100:
+        return HttpResponseBadRequest("Exceeded max rows (100)")
+    arks = [parse_ark_lookup(d.get('ark')) for d in data]
+    ark_objs = Ark.objects.filter(ark__in=arks)
+    resp = [ark_to_json(ark, metadata=False) for ark in ark_objs]
+    return JsonResponse(resp, safe=False)
+
+
+@csrf_exempt
+def batch_update_arks(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))['data']
+    except (json.JSONDecodeError, TypeError) as e:
+        return HttpResponseBadRequest(e)
+    if len(data) > 100:
+        return HttpResponseBadRequest("Exceeded max rows (100)")
+    
+    naans = set()
+    for d in data:
+        if 'ark' not in d:
+            return HttpResponseBadRequest("Each record must have an 'ark' field.")
+        _, naan, _ = parse_ark(d['ark'])
+        naans.add(naan)
+
+    if len(naans) != 1:
+        return HttpResponseBadRequest("Batch queries are limited to one NAAN at a time")
+    
+    naan = naans.pop()
+    authorized_naan = authorize(request, naan)
+    if authorized_naan is None:
+        return HttpResponseForbidden()
+
+    
+    arks = [parse_ark_lookup(d.get('ark')) for d in data]
+    ark_objs = Ark.objects.filter(ark__in=arks)
+    
+    # track the fields we have seen so far for efficient updating
+    seen_fields = set()
+    for ark_obj, new_record in zip(ark_objs, data):
+        ark_obj.set_fields(new_record)
+        seen_fields.update(new_record.keys())
+    # don't update primary key
+    seen_fields.remove('ark')
+    n_updated = Ark.objects.bulk_update(ark_objs, fields=seen_fields)
+    return JsonResponse({
+        'num_received': len(data),
+        'num_updated': n_updated
+    })
+
+@csrf_exempt
+def batch_mint_arks(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, TypeError) as e:
+        return HttpResponseBadRequest(e)
+
+    naan = data.get('naan')
+    authorized_naan = authorize(request, naan)
+    if authorized_naan is None:
+        return HttpResponseForbidden()
+    records = data['data']
+
+    if len(records) > 100:
+        return HttpResponseBadRequest("Exceeded max rows (100)")
+
+    shoulders = set()
+    for d in records:
+        if 'shoulder' not in d:
+            return HttpResponseBadRequest("shoulder value must be present in every record")
+        shoulders.add(d['shoulder'])
+    shoulder_objs = dict()
+    for s in shoulders:
+        shoulder_obj = Shoulder.objects.filter(shoulder=s).first()
+        if shoulder_obj is None:
+            return HttpResponseBadRequest(f"shoulder {s} does not exist")
+        shoulder_objs[s] = shoulder_obj
+
+    created = None
+    for _ in range(COLLISIONS):
+        # Attempt to mint the batch with max COLLISION retries times
+        try:
+            new_arks = []
+            for record in records:
+                shoulder = shoulder_objs[record['shoulder']]
+                new_ark = Ark.create(authorized_naan, shoulder)
+                new_ark.set_fields(record)
+                new_arks.append(new_ark)
+            created = Ark.objects.bulk_create(new_arks)
+        except IntegrityError:
+            continue
+        break
+    else:
+        msg = f"Gave up creating bulk arks after {COLLISIONS} collision(s)"
+        logger.error(msg)
+        return HttpResponseServerError(msg)
+    return JsonResponse({
+        'num_received': len(records),
+        'arks_created': [ark_to_json(c, metadata=False) for c in created]
+    })

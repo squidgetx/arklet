@@ -41,6 +41,12 @@ def parse_ark(ark: str) -> Tuple[str, int, str]:
 
     return nma, naan_int, identifier
 
+def parse_ark_lookup(ark: str) -> str:
+
+    _, naan_int, identifier = parse_ark(ark)
+    return f"{naan_int}/{identifier}"
+
+
 def gen_prefixes(ark: str):
     parts = ark.split('/')
     for i in range(1, len(parts)):
