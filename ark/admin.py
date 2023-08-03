@@ -15,6 +15,11 @@ class NaanAdmin(admin.ModelAdmin):
 
     list_display = ["name", "naan"]
 
+@admin.register(Shoulder)
+class ShoulderAdmin(admin.ModelAdmin):
+    """Django Admin model for shoulders"""
+
+    list_display = ["shoulder", "name", "naan"]
 
 @admin.register(Key)
 class KeyAdmin(admin.ModelAdmin):

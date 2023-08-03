@@ -32,12 +32,22 @@ def parse_ark(ark: str) -> Tuple[str, int, str]:
     parts = ark.split("/")
     if len(parts) < 2:
         raise ValueError("Not a valid ARK")
-    # TODO: assigned_name definition here conflicts with models.Ark.assigned_name
-    # parse_ark here doesn't attempt to parse out the shoulder of the ARK.
-    naan, assigned_name = parts[:2]
+    naan = parts[0]
+    identifier = '/'.join(parts[1:])
     try:
         naan_int = int(naan)
     except ValueError:
         raise ValueError("ARK NAAN must be an integer")
 
-    return nma, naan_int, assigned_name
+    return nma, naan_int, identifier
+
+def parse_ark_lookup(ark: str) -> str:
+
+    _, naan_int, identifier = parse_ark(ark)
+    return f"{naan_int}/{identifier}"
+
+
+def gen_prefixes(ark: str):
+    parts = ark.split('/')
+    for i in range(1, len(parts)):
+        yield '/'.join(parts[:-i])
