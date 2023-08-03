@@ -47,8 +47,7 @@ class UpdateArkForm(forms.Form):
 
         # Remove fields that are not provided in the request
         for field_name in self.fields:
-            if field_name not in self.data:
+            if self.data.get(field_name) is None:
                 cleaned_data.pop(field_name, None)
 
         return cleaned_data
-
