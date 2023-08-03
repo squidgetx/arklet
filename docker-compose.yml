@@ -28,7 +28,7 @@ services:
       - ./docker/env.postgres.local
       - ./docker/env.minter.local
     ports:
-      - "8000:8000"
+      - "8001:8001"
 
   arklet-resolver:
     container_name: arklet_resolver
@@ -46,7 +46,7 @@ services:
       - ./docker/env.postgres.local
       - ./docker/env.resolver.local
     ports:
-      - "8001:8001"
+      - "8000:8000"
 
 volumes:
   postgres:

@@ -17,7 +17,7 @@ services:
       - ./docker/env.postgres.prod
       - ./docker/env.minter.prod
     ports:
-      - "8000:8000"
+      - "8001:8001"
 
   arklet-resolver:
     container_name: arklet_resolver
@@ -35,4 +35,4 @@ services:
       - ./docker/env.postgres.prod
       - ./docker/env.resolver.prod
     ports:
-      - "8001:8001"
+      - "8000:8000"
