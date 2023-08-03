@@ -237,3 +237,32 @@ def batch_query_arks(request):
     ark_objs = Ark.objects.filter(ark__in=arks)
     resp = [ark_to_json(ark) for ark in ark_objs]
     return JsonResponse(resp, safe=False)
+
+@csrf_exempt
+def batch_update_arks(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, TypeError) as e:
+        return HttpResponseBadRequest(e)
+    if len(data) > 100:
+        return HttpResponseBadRequest("Exceeded max rows (100)")
+    print(data)
+    arks = [parse_ark_lookup(d.get('ark')) for d in data]
+    ark_objs = Ark.objects.filter(ark__in=arks)
+    # only attempt to update valid attributes 
+    permitted_fields = set(UpdateArkForm.base_fields)
+    # don't update primary key
+    permitted_fields.remove('ark')
+    
+    # track the fields we have seen so far for efficient updating
+    seen_fields = set()
+    for ark_obj, new_record in zip(ark_objs, data):
+        for key, value in new_record.items():
+            if key in permitted_fields:
+                seen_fields.add(key)
+                setattr(ark_obj, key, value)
+    n_updated = Ark.objects.bulk_update(ark_objs, fields=seen_fields)
+    return JsonResponse({
+        'num_received': len(data),
+        'num_updated': n_updated
+    })

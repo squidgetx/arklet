@@ -72,12 +72,13 @@ def query_arks(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
     jsondata = csv2json(data['csv'])
     assert 'ark' in jsondata[0], "CSV for bulk ark querying must include 'ark' column"
-    print(jsondata)
     return query(POST, 'bulk_query', json=jsondata)
 
 def update_arks(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
-    raise NotImplementedError
+    jsondata = csv2json(data['csv'])
+    assert 'ark' in jsondata[0], "CSV for bulk ark querying must include 'ark' column"
+    return query(POST, 'bulk_update', json=jsondata)
 
 def mint_arks(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
@@ -90,7 +91,6 @@ ENDPOINTS = [
     query_arks,
     update_arks,
     mint_arks
-
 ] 
 
 if __name__ == "__main__":
