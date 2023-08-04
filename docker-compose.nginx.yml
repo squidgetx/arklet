@@ -15,7 +15,7 @@ services:
       - static_volume:/app/static
     env_file:
       - ./docker/env.prod
-    env:
+    environment:
       - ARKLET_PORT: 8001
     expose:
       - 8001
@@ -34,7 +34,7 @@ services:
       - static_volume:/app/static
     env_file:
       - ./docker/env.prod
-    env:
+    environment:
       - ARKLET_PORT: 8000
       - RESOLVER: true
     expose:
