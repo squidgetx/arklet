@@ -5,7 +5,7 @@ services:
     container_name: arklet_db
     image: postgres:14-alpine
     env_file:
-      - ./docker/env.postgres.local
+      - ./docker/env.local
     volumes:
       - postgres:/var/lib/postgresql/data
     restart: always
@@ -25,8 +25,9 @@ services:
       - ./ark_import:/app/ark_import
       - ./arklet:/app/arklet
     env_file:
-      - ./docker/env.postgres.local
-      - ./docker/env.minter.local
+      - ./docker/env.local
+    environment:
+      ARKLET_PORT: "8001"
     ports:
       - "8001:8001"
 
@@ -43,8 +44,10 @@ services:
       - ./ark_import:/app/ark_import
       - ./arklet:/app/arklet
     env_file:
-      - ./docker/env.postgres.local
-      - ./docker/env.resolver.local
+      - ./docker/env.local
+    environment:
+      ARKLET_PORT: "8000"
+      RESOLVER: "true"
     ports:
       - "8000:8000"
 

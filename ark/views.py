@@ -7,7 +7,6 @@ from django.db.models.functions import Length
 from django.http import (
     Http404,
     HttpRequest,
-    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
@@ -322,4 +321,9 @@ def batch_mint_arks(request):
     return JsonResponse({
         'num_received': len(records),
         'arks_created': [ark_to_json(c, metadata=False) for c in created]
+    })
+
+def status(request):
+    return JsonResponse({
+        'status': 'ok!',
     })

@@ -30,6 +30,7 @@ minterpatterns = [
 
 resolverpatterns = [
     re_path(r"^(resolve/)?(?P<ark>ark:/?.*$)", views.resolve_ark, name="resolve_ark"),
+    path("", views.status, name="status"),
 ]
 
 combinedpatterns = minterpatterns + resolverpatterns
