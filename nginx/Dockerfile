@@ -4,7 +4,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d
 
 # Install required packages for Certbot
-RUN apt-get update && apt-get install -y certbot python3-certbot-nginx && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y certbot python3-certbot-nginx cron && rm -rf /var/lib/apt/lists/*
 
 # Copy the script to obtain and renew Let's Encrypt certificates
 COPY certbot_renew.sh /usr/local/bin/certbot_renew.sh
