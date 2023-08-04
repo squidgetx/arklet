@@ -6,7 +6,6 @@ import os
 
 DEFAULT_URL = 'http://127.0.0.1:8000'
 DEFAULT_KEY = os.environ['ARK_API_KEY']
-DEFAULT_NAAN = None
 
 MINT_FIELDS = [
     'naan',
@@ -46,7 +45,7 @@ def query(method, url, **kwargs):
         raise ArkAPIError(f"Request failed: {response.status_code}, {response.text}")
 
 
-def query_ark(data):
+def query(data):
     assert data['ark'], "Must include --ark argument"
     return query(GET, data['ark'] + '?json')
 
@@ -54,11 +53,11 @@ def authorized(method, url, data):
     auth = DEFAULT_KEY
     return query(method, url, json=data, headers={'Authorization': auth})
 
-def update_ark(data: dict):
+def update(data: dict):
     assert data['ark'], "Must include --ark argument"
     return authorized(PUT, '/update', data)
 
-def mint_ark(data: dict):
+def mint(data: dict):
     assert data['naan'], "Must include --naan argument for mint operation"
     assert data['shoulder'], "Must include --shoulder argument for mint operation"
     return authorized(POST, '/mint', data)
@@ -67,14 +66,14 @@ def csv2json(csvfile):
     reader = csv.DictReader(open(csvfile, 'rt'))
     return [r for r in reader]
 
-def query_arks(data: dict):
+def query_csv(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
     assert len(data.keys()) == 1, "Only --csv argument is required for bulk query"
     jsondata = csv2json(data['csv'])
     assert 'ark' in jsondata[0], "CSV for bulk ark querying must include 'ark' column"
     return query(POST, 'bulk_query', json=jsondata)
 
-def update_arks(data: dict):
+def update_csv(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
     assert len(data.keys()) == 1, "Only --csv argument is required for bulk update"
     update_data = csv2json(data['csv'])
@@ -84,7 +83,7 @@ def update_arks(data: dict):
         'data': update_data,
     })
 
-def mint_arks(data: dict):
+def mint_csv(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
     assert data['naan'], "Must include --naan argument for bulk operations"
     assert len(data.keys()) == 2, "Only --csv argument is required for bulk update"
@@ -95,12 +94,12 @@ def mint_arks(data: dict):
     })
 
 ENDPOINTS = [
-    query_ark,
-    update_ark,
-    mint_ark,
-    query_arks,
-    update_arks,
-    mint_arks
+    query,
+    update,
+    mint,
+    query_csv,
+    update_csv,
+    mint_csv, 
 ] 
 
 if __name__ == "__main__":

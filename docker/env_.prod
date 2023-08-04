@@ -1,0 +1,19 @@
+ARKLET_DJANGO_SECRET_KEY=local-test-secret ##ggignore
+ARKLET_DEBUG=False
+ARKLET_HOST=ark.frick.org
+
+# Would be nice to undup these eventually
+POSTGRES_DB=arklet
+ARKLET_POSTGRES_NAME=arklet
+
+POSTGRES_USER=arklet_user
+ARKLET_POSTGRES_USER=arklet_user
+
+POSTGRES_PASSWORD=^BV4K%duYrj9kc6) # ggignore
+ARKLET_POSTGRES_PASSWORD=^BV4K%duYrj9kc6) # ggignore
+
+POSTGRES_HOST=dbaas-db-7662879-do-user-14430942-0.b.db.ondigitalocean.com
+ARKLET_POSTGRES_HOST=dbaas-db-7662879-do-user-14430942-0.b.db.ondigitalocean.com
+
+POSTGRESQL_PORT=25060
+ARKLET_POSTGRES_PORT=25060
