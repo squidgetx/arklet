@@ -8,10 +8,9 @@ services:
       context: .
       target: prod
       dockerfile: ./Dockerfile
-    command: /app/entrypoint.sh
+    command: /app/entrypoint.prod.sh
     volumes:
       - ./ark:/app/ark
-      - ./ark_import:/app/ark_import
       - ./arklet:/app/arklet
     env_file:
       - ./docker/env.postgres.prod
@@ -26,10 +25,9 @@ services:
       context: .
       target: prod
       dockerfile: ./Dockerfile
-    command: /app/entrypoint.sh
+    command: /app/entrypoint.prod.sh
     volumes:
       - ./ark:/app/ark
-      - ./ark_import:/app/ark_import
       - ./arklet:/app/arklet
     env_file:
       - ./docker/env.postgres.prod

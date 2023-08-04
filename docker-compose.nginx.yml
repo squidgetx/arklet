@@ -1,0 +1,55 @@
+version: "3.7"
+
+services:
+  arklet-minter:
+    container_name: arklet_minter
+    restart: always
+    build:
+      context: .
+      target: prod
+      dockerfile: ./Dockerfile
+    command: /app/entrypoint.sh
+    volumes:
+      - ./ark:/app/ark
+      - ./arklet:/app/arklet
+      - static_volume:/app/static
+    env_file:
+      - ./docker/env.prod
+    env:
+      - ARKLET_PORT: 8001
+    expose:
+      - 8001
+
+  arklet-resolver:
+    container_name: arklet_resolver
+    restart: always
+    build:
+      context: .
+      target: prod
+      dockerfile: ./Dockerfile
+    command: /app/entrypoint.sh
+    volumes:
+      - ./ark:/app/ark
+      - ./arklet:/app/arklet
+      - static_volume:/app/static
+    env_file:
+      - ./docker/env.prod
+    env:
+      - ARKLET_PORT: 8000
+      - RESOLVER: true
+    expose:
+      - 8000
+
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+      - 8080:8080
+    depends_on:
+      - arklet-minter
+      - arklet-resolver
+    volumes:
+      - static_volume:/app/static
+
+volumes:
+  static_volume:

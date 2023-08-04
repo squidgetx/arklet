@@ -30,26 +30,18 @@ RUN ./install-packages.sh
 # ----------------------------------------------------
 # Install dependencies
 # ----------------------------------------------------
-FROM common-base AS dependencies
+FROM common-base AS app-run
+
 ENV PATH="/opt/venv/bin:$PATH"
 
-#     apt-get install build-essential -y
 COPY requirements.txt /app/
-
-RUN pip install --target /opt/packages -r requirements.txt
-
-# ----------------------------------------------------
-# Copy project
-# ----------------------------------------------------
-FROM common-base AS app-run
-COPY --from=dependencies /opt/packages /opt/packages
-ENV PYTHONPATH "${PYTHONPATH}:/opt/packages"
-# ENV  PYTHONPATH="$PYTHONPATH:/app/lemarche:/app/config"
 COPY ./ark ./ark
 COPY ./ark_import ./ark_import
 COPY ./arklet ./arklet
 COPY ./manage.py ./manage.py
 COPY ./docker/entrypoint.sh ./entrypoint.sh
+
+RUN pip install -r requirements.txt
 
 # ----------------------------------------------------
 # Run Dev
