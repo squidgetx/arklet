@@ -158,8 +158,8 @@ Create a NAAN and an associated API key.
 
 ## Production
 
-This repo is pre-configured for production deployment using nginx, gunicorn, and assuming a managed database instance + general webserver compute instance (eg, Digital Ocean droplet + managed postgres).
+This repo is pre-configured for production deployment using nginx, gunicorn, and assuming a managed database instance + general webserver compute instance (eg, Digital Ocean droplet + managed postgres). Nginx and gunicorn replace the development Django server offering improved performance and security.
 
 Fill in the relevant postgres credentials and a secure Django secret key in `env.prod.example` and rename the file to `env.prod`.
 
-To launch the minter, resolver, and nginx server run `docker-compose -f docker-compose.nginx.yml up`, or simply `make nginx`. By default, the resolver runs on port 80 (eg, no need to specify a port number when using the resolver service) and the minter runs on port 8080.
+To launch the minter, resolver, and nginx server run `docker-compose -f docker-compose.nginx.yml up`, or simply `make prod`. By default, the resolver runs on port 80 (eg, no need to specify a port number when using the resolver service) and the minter runs on port 8080. If you wish to change the port that the minter is accessed on you must alter the port numbers in both `docker-compose.nginx.yml` as well as `nginx.conf`

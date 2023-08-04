@@ -49,9 +49,15 @@ DEBUG = env("ARKLET_DEBUG")
 
 ALLOWED_HOSTS = [
     env("ARKLET_HOST"),
-    "wbgrp-svc302.us.archive.org",
-    "qa-ark.archive.org",
-    "ark.archive.org",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    f"http://*.127.0.0.1",
+    f"http://*.127.0.0.1:{env('ARKLET_PORT')}",
+    f"http://*.{env('ARKLET_HOST')}",
+    f"https://*.{env('ARKLET_HOST')}",
+    f"http://*.{env('ARKLET_HOST')}:{env('ARKLET_PORT')}",
+    f"https://*.{env('ARKLET_HOST')}:{env('ARKLET_PORT')}",
 ]
 
 

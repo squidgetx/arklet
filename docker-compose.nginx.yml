@@ -16,9 +16,9 @@ services:
     env_file:
       - ./docker/env.prod
     environment:
-      ARKLET_PORT: "8001"
+      ARKLET_PORT: "8080"
     expose:
-      - 8001
+      - 8080
 
   arklet-resolver:
     container_name: arklet_resolver

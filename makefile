@@ -3,7 +3,7 @@ default: local
 local:
 	docker-compose up --build
 
-nginx: 
+prod: 
 	docker-compose -f docker-compose.nginx.yml up --build
 
 dev-cmd:
