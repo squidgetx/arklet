@@ -41,6 +41,7 @@ services:
       - 8000
 
   nginx:
+    restart: always
     build: ./nginx
     ports:
       - 80:80
