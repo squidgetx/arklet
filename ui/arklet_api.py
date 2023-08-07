@@ -31,7 +31,7 @@ PUT = 'put'
 class ArkAPIError(Exception):
     pass
 
-def query(method, url, **kwargs):
+def query_generic(method, url, **kwargs):
     url = DEFAULT_URL + '/' + url
     if method == GET:
         response = requests.get(url)
@@ -47,11 +47,11 @@ def query(method, url, **kwargs):
 
 def query(data):
     assert data['ark'], "Must include --ark argument"
-    return query(GET, data['ark'] + '?json')
+    return query_generic(GET, data['ark'] + '?json')
 
 def authorized(method, url, data):
     auth = DEFAULT_KEY
-    return query(method, url, json=data, headers={'Authorization': auth})
+    return query_generic(method, url, json=data, headers={'Authorization': auth})
 
 def update(data: dict):
     assert data['ark'], "Must include --ark argument"
@@ -71,7 +71,7 @@ def query_csv(data: dict):
     assert len(data.keys()) == 1, "Only --csv argument is required for bulk query"
     jsondata = csv2json(data['csv'])
     assert 'ark' in jsondata[0], "CSV for bulk ark querying must include 'ark' column"
-    return query(POST, 'bulk_query', json=jsondata)
+    return query_generic(POST, 'bulk_query', json=jsondata)
 
 def update_csv(data: dict):
     assert data['csv'], "Must include --csv argument for bulk operations"
