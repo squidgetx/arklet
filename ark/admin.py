@@ -19,6 +19,14 @@ class NaanAdmin(admin.ModelAdmin):
 class ShoulderAdmin(admin.ModelAdmin):
     """Django Admin model for shoulders"""
 
+    # don't allow editing shoulders after creation
+    # because it will break existing ARK identifiers
+    def get_readonly_fields(self, request, obj=None):
+        defaults = super().get_readonly_fields(request, obj=obj)
+        if obj:  
+            defaults = tuple(defaults) + ('shoulder', )  
+        return defaults
+
     list_display = ["shoulder", "name", "naan"]
 
 @admin.register(Key)

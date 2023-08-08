@@ -7,7 +7,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from ark.forms import UpdateArkForm
+
+from ark.forms import UpdateArkForm, validate_shoulder
 from ark.utils import generate_noid, noid_check_digit
 
 class Naan(models.Model):
@@ -63,7 +64,7 @@ class Key(models.Model):
 
 
 class Shoulder(models.Model):
-    shoulder = models.CharField(max_length=50, editable=False, unique=True)
+    shoulder = models.CharField(max_length=50, unique=True, validators=[validate_shoulder])
     naan = models.ForeignKey(Naan, on_delete=models.DO_NOTHING)
 
     name = models.CharField(max_length=200)
@@ -131,7 +132,7 @@ class Ark(models.Model):
     
     @classmethod
     def create(cls, naan: Naan, shoulder: Shoulder):
-        noid = generate_noid(env("ARKLET_NOID_LENGTH"))
+        noid = generate_noid(os.environ.get("ARKLET_NOID_LENGTH", 8))
         ark_prefix = f"{naan.naan}{shoulder.shoulder}"
         base_ark_string = f"{ark_prefix}{noid}"
         check_digit = noid_check_digit(base_ark_string)

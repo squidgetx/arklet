@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 
-DEFAULT_URL = 'http://127.0.0.1:8000'
+DEFAULT_URL = 'http://127.0.0.1:8001'
 DEFAULT_KEY = os.environ['ARK_API_KEY']
 
 MINT_FIELDS = [
@@ -55,7 +55,7 @@ def authorized(method, url, data):
 
 def update(data: dict):
     assert data['ark'], "Must include --ark argument"
-    return authorized(PUT, '/update', data)
+    return authorized(PUT, 'update', data)
 
 def mint(data: dict):
     assert data['naan'], "Must include --naan argument for mint operation"
