@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -324,6 +325,9 @@ def batch_mint_arks(request):
     })
 
 def status(request):
+    service = 'resolver' if os.environ.get("RESOLVER") else 'minter'
+
     return JsonResponse({
+        'service': service,
         'status': 'ok!',
     })
