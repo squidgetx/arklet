@@ -4,6 +4,7 @@ services:
   arklet-minter:
     container_name: arklet_minter
     restart: always
+    profiles: ["arklet"]
     build:
       context: .
       target: prod
@@ -22,6 +23,7 @@ services:
 
   arklet-resolver:
     container_name: arklet_resolver
+    profiles: ["arklet"]
     restart: always
     build:
       context: .
