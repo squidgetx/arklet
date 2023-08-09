@@ -7,7 +7,7 @@ prod: redeploy webserver
 
 redeploy: 
 	git pull
-	docker-compose -f docker-compose.nginx.yml up --build --detach --profile arklet
+	docker-compose -f docker-compose.nginx.yml up --build --detach
 
 webserver:
 	docker-compose -f docker-compose.nginx.yml down -v nginx
