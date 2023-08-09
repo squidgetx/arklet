@@ -10,7 +10,7 @@ EMAIL=saz310@nyu.edu
 certbot certonly --non-interactive --nginx --agree-tos --email $EMAIL $DOMAIN_FLAGS &&
 cp /nginx.ssl.conf /etc/nginx/conf.d/nginx.conf &&
 /etc/init.d/nginx reload ||
-cat /var/log/letsencrypt/letsencrypt.log
+cat /var/log/letsencrypt/letsencrypt.log | grep acme.messages
 
 
 
