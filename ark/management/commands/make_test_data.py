@@ -4,7 +4,7 @@
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from ark.models import Ark, Naan
+from ark.models import Ark, Naan, Shoulder
 from ark.utils import generate_noid
 import os
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
             naan = Naan(naan=options['naan'])
             naan.save()
 
-        shoulder = "/b0"
+        shoulder = Shoulder.objects.get(shoulder="/test1")
         batch_size = 10000
 
         for i in range(0, n_arks, batch_size):
