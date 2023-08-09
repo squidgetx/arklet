@@ -64,11 +64,14 @@ class Key(models.Model):
 
 
 class Shoulder(models.Model):
-    shoulder = models.CharField(max_length=50, unique=True, validators=[validate_shoulder])
+    shoulder = models.CharField(max_length=50, validators=[validate_shoulder])
     naan = models.ForeignKey(Naan, on_delete=models.DO_NOTHING)
 
     name = models.CharField(max_length=200)
     description = models.TextField()
+
+    class Meta:
+        unique_together = ('shoulder', 'naan')
 
     def __str__(self):
         return f"{self.naan.naan}{self.shoulder}"
