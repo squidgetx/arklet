@@ -7,7 +7,7 @@ from django.db import transaction
 from ark.models import Ark, Naan, Shoulder
 from ark.utils import generate_noid
 from django.db.models import Count
-import os
+import json
 import random
 
 
@@ -21,5 +21,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         naan = Naan.objects.get(pk=options["naan"])
         arks = Ark.objects.filter(naan=naan).values('shoulder__shoulder').annotate(total=Count('ark')).order_by('shoulder__shoulder')
-        print(arks)
+        print(json.dumps(list(arks), indent=4)
 
