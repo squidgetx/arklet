@@ -8,5 +8,5 @@ COPY nginx.conf /etc/nginx/conf.d
 COPY nginx.ssl.conf /nginx.ssl.conf
 
 # Set up SSL
-COPY certbot.sh /ssl_setup.sh
+COPY ssl_setup.sh /ssl_setup.sh
 RUN chmod +x /ssl_setup.sh
