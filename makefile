@@ -8,6 +8,7 @@ prod: webserver
 redeploy: 
 	git pull
 	docker-compose -f docker-compose.nginx.yml up --build --detach
+	docker-compose -f docker-compose.nginx.yml --profile nginx restart nginx
 
 webserver:
 	docker-compose -f docker-compose.nginx.yml --profile nginx up --build --detach
