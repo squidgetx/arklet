@@ -1,12 +1,14 @@
-# Arklet-Frick: A basic ARK resolver
+# squidgetx/arklet: A basic ARK resolver
 
-Arklet-Frick is a fork of the [Internet Archive Arklet](https://github.com/internetarchive/arklet/) project
+Fork of the [Internet Archive Arklet](https://github.com/internetarchive/arklet/)
+Python Django application for minting, binding, and resolving ARKs
 with additional features, improved security and bugfixes.
 
-Arklet-Frick is a Python Django application for minting, binding, and resolving ARKs.
+In use by the Frick Museum in New York ([Fork Link](https://github.com/frickdahl/arklet-frick))
+
 
 It is intended to follow best practices set out by https://arks.org/.
-| |Arklet-Frick | Arklet |
+| |squidgetx/arklet| internetarchive/arklet |
 |-|------------- | ------------- |
 |ARK resolution|x|x|
 |ARK minting and editing|x|x|
