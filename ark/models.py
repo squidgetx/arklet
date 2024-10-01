@@ -135,7 +135,7 @@ class Ark(models.Model):
     
     @classmethod
     def create(cls, naan: Naan, shoulder: Shoulder):
-        noid = generate_noid(os.environ.get("ARKLET_NOID_LENGTH", 8))
+        noid = generate_noid(int(os.environ.get("ARKLET_NOID_LENGTH", 8)))
         ark_prefix = f"{naan.naan}{shoulder.shoulder}"
         base_ark_string = f"{ark_prefix}{noid}"
         check_digit = noid_check_digit(base_ark_string)
